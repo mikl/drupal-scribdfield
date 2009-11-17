@@ -1,0 +1,7 @@
+; $Id$
+name = ScribdField
+description = Enables CCK FileField integration with Scribd.com.
+package = CCK
+dependencies[] = content
+dependencies[] = filefield
+core = 6.x
