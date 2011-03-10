@@ -246,7 +246,7 @@ function scribdfield_form_content_field_overview_submit(&$form, &$form_state) {
 /**
  * FormAPI theme function. Theme the output of an image field.
  */
-function theme_scribdfield_widget(&$element) {
+function theme_scribdfield_widget($element) {
   return theme('form_element', $element, $element['#children']);
 }
 
