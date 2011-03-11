@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Installation and upgrade code for ScribdField.
+ */
 
 /**
  * Implementation of hook_install().
@@ -15,6 +19,9 @@ function scribdfield_uninstall() {
   drupal_load('module', 'content');
   content_notify('uninstall', 'scribdfield');
   variable_del('scribd_api_key');
+  variable_del('scribd_api_secret');
+  variable_del('scribd_secure_files');
+  variable_del('scribd_disable_print');
 }
 
 /**
@@ -32,3 +39,4 @@ function scribdfield_disable() {
   drupal_load('module', 'content');
   content_notify('disable', 'scribdfield');
 }
+
