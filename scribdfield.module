@@ -96,8 +96,9 @@ function scribdfield_widget_process($element, $edit, &$form_state, $form) {
 
   if (!empty($element['#value']['filepath'])) {
     $element['data']['scribdfield_warning'] = array(
-      '#type'   => 'markup', // we don't handle any remote file deletion, so let the user know. AND MAKE 'EM DO THE LEGWORK. HAHAHAHAH.
-      '#value'  => t('<div class="description">Files intended for Scribd.com are not sent until this entire form has been saved. Uploaded files are <strong>never</strong> automatically removed from Scribd.com: if you remove the file or delete this content, you\'ll also need to manually remove them from Scribd\'s "My Docs".</div>'),
+      '#prefix' => '<div class="description">',
+      '#suffix' => '</div>',
+      '#value'  => t('Files intended for Scribd.com are not sent until this entire form has been saved. Uploaded files are <strong>never</strong> automatically removed from Scribd.com: if you remove the file or delete this content, you’ll also need to manually remove them from Scribd’s “My documents” page.'),
     );
   }
 
