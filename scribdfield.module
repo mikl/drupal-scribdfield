@@ -122,7 +122,8 @@ function scribdfield_nodeapi(&$node, $op, $teaser, $page) {
             foreach ($node->{$node_key} as $field_delta => $field_value) {
               if ( ($field_value['filepath'])
                 && ($field_delta == 'field_scribd')
-                && !($field_value['data']['scribd_doc_id']) ){
+                && !($field_value['data']['scribd_doc_id']
+                && file_exists($node->{$node_key}[$field_delta]['filepath'])) ){
 
                 // Handle the actual upload.
                 $response_xml = scribdfield_api_upload($node->{$node_key}[$field_delta]['filepath']);
