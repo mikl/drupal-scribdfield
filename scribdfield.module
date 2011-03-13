@@ -128,6 +128,9 @@ function scribdfield_nodeapi(&$node, $op, $teaser, $page) {
                 // Handle the actual upload.
                 $response_xml = scribdfield_api_upload($node->{$node_key}[$field_delta]['filepath']);
 
+                // Skip on upload failure.
+                if (!$response_xml) { continue; }
+
                 // On successful upload, store the returned values.
                 if ($response_xml->attributes()->stat == 'ok') {
                   $node->{$node_key}[$field_delta]['data']['scribd_doc_id']           = (string) $response_xml->doc_id;
@@ -213,7 +216,10 @@ function scribdfield_api_upload($file) {
   curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
   curl_setopt($ch, CURLOPT_POST, 1);
   curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-  return new SimpleXMLElement(curl_exec($ch));
+
+  $response = curl_exec($ch);
+
+  return new SimpleXMLElement($response);
 }
 
 /**
