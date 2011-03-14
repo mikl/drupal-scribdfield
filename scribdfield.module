@@ -111,59 +111,14 @@ function scribdfield_widget_process($element, $edit, &$form_state, $form) {
 function scribdfield_nodeapi(&$node, $op, $teaser, $page) {
   switch ($op) {
     case 'presave':
-      foreach ($node as $node_key => $node_value) {
-        if (strpos($node_key, 'field_') !== FALSE) {
-          $field = content_fields($node_key, $node->type);
+      // Search the node for ScribdField instances.
+      foreach ($node as $field_name => $field_value) {
+        if (strpos($field_name, 'field_') !== FALSE) {
+          $field = content_fields($field_name, $node->type);
           if ($field['widget']['module'] == 'scribdfield') {
             unset($_SESSION['scribfield_removed_files']);
-            // see scribdfield_widget_process() for sets.
-
-            // Upload each file to Scribd.
-            foreach ($node->{$node_key} as $field_delta => $field_value) {
-              if ( ($field_value['filepath'])
-                && ($field_delta == 'field_scribd')
-                && !($field_value['data']['scribd_doc_id']
-                && file_exists($node->{$node_key}[$field_delta]['filepath'])) ){
-
-                // Handle the actual upload.
-                $response_xml = scribdfield_api_upload($node->{$node_key}[$field_delta]['filepath']);
-
-                // Skip on upload failure.
-                if (!$response_xml) { continue; }
-
-                // On successful upload, store the returned values.
-                if ($response_xml->attributes()->stat == 'ok') {
-                  $node->{$node_key}[$field_delta]['data']['scribd_doc_id']           = (string) $response_xml->doc_id;
-                  $node->{$node_key}[$field_delta]['data']['scribd_access_key']       = (string) $response_xml->access_key;
-                  $node->{$node_key}[$field_delta]['data']['scribd_secret_password']  = (string) $response_xml->secret_password;
-                  drupal_set_message(t('@filepath has been uploaded to Scribd.com.',
-                    array('@filepath' => $node->{$node_key}[$field_delta]['filepath'])));
-
-                  // Check to see if files are set to be secure and, if so,
-                  // delete file from the local file system.
-                  if (variable_get('scribd_secure_files', NULL)) {
-                    file_delete( $node->{$node_key}[$field_delta]['filepath'] );
-
-                    // Check to see if printing is meant to be disabled.
-                    // If so, disable it through Scribd's API.
-                    if( variable_get('scribd_disable_print', NULL) ) {
-                      $response_xml2 = scribdfield_api_disable_printing($node->{$node_key}[$field_delta]['data']['scribd_doc_id']);
-                      if ($response_xml->attributes()->stat == 'ok') {
-                        drupal_set_message(t('Printing was disabled on Scribd.com for your file.'));
-                      }
-                      else {
-                        drupal_set_message(t('Printing could not be disabled for this file.  Delete and try again.'));
-                      }
-                    }
-                  }
-
-                }
-                else {
-                  drupal_set_message(t('@filepath could not be uploaded to Scribd.com: @error.', // thank you, usable error messages.
-                    array('@filepath' => $node->{$node_key}[$field_delta]['filepath'], '@error' => $response_xml->error->attributes()->message)), 'error');
-                }
-              }
-            }
+            // We have a winner, update the field.
+            _scribdfield_node_presave($node, $field);
           }
         }
       }
@@ -192,15 +147,76 @@ function scribdfield_nodeapi(&$node, $op, $teaser, $page) {
 }
 
 /**
+ * Helper function to handle when the field is saved.
+ *
+ * @param $node
+ *   The node we're working on.
+ * @param $field
+ *   The CCK field we're working on (from content_fields()).
+ */
+function _scribdfield_node_presave(&$node, $field) {
+  // Upload each file to Scribd.
+  foreach ($node->{$field['field_name']} as $field_delta => $field_value) {
+    if ( ($field_value['filepath'])
+      && ($field_delta == 'field_scribd')
+      && !($field_value['data']['scribd_doc_id']
+      && file_exists($node->{$field['field_name']}[$field_delta]['filepath'])) ){
+
+      // Handle the actual upload.
+      $response_xml = scribdfield_api_upload($node->{$field['field_name']}[$field_delta]['filepath']);
+
+      // Skip on upload failure.
+      if (!$response_xml) { continue; }
+
+      // On successful upload, store the returned values.
+      if ($response_xml->attributes()->stat == 'ok') {
+        $node->{$field['field_name']}[$field_delta]['data']['scribd_doc_id']           = (string) $response_xml->doc_id;
+        $node->{$field['field_name']}[$field_delta]['data']['scribd_access_key']       = (string) $response_xml->access_key;
+        $node->{$field['field_name']}[$field_delta]['data']['scribd_secret_password']  = (string) $response_xml->secret_password;
+        drupal_set_message(t('@filepath has been uploaded to Scribd.com.',
+          array('@filepath' => $node->{$field['field_name']}[$field_delta]['filepath'])));
+
+        // Check to see if files are set to be secure and, if so,
+        // delete file from the local file system.
+        if (variable_get('scribd_secure_files', NULL)) {
+          file_delete( $node->{$field['field_name']}[$field_delta]['filepath'] );
+
+          // Check to see if printing is meant to be disabled.
+          // If so, disable it through Scribd's API.
+          if( variable_get('scribd_disable_print', NULL) ) {
+            $response_xml2 = scribdfield_api_disable_printing($node->{$field['field_name']}[$field_delta]['data']['scribd_doc_id']);
+            if ($response_xml->attributes()->stat == 'ok') {
+              drupal_set_message(t('Printing was disabled on Scribd.com for your file.'));
+            }
+            else {
+              drupal_set_message(t('Printing could not be disabled for this file.  Delete and try again.'));
+            }
+          }
+        }
+      }
+      else {
+        drupal_set_message(t('@filepath could not be uploaded to Scribd.com: @error.', // thank you, usable error messages.
+          array('@filepath' => $node->{$node_key}[$field_delta]['filepath'], '@error' => $response_xml->error->attributes()->message)), 'error');
+      }
+    }
+  }
+}
+
+/**
  * Uses Scribd's docs.upload API function to send uploaded file along.
  *
  * http://www.scribd.com/developers/api?method_name=docs.upload
+ *
+ * @param $filename
+ *   Full filename (with path) to the file to upload.
  */
-function scribdfield_api_upload($file) {
+function scribdfield_api_upload($filename) {
+  if (!file_exists($filename)) { return FALSE; }
+
   $params = array(
     'api_key'   => variable_get('scribd_api_key', NULL),
     'doc_type'  => 'pdf',
-    'file'      => '@' . $file,
+    'file'      => '@' . $filename,
     'method'    => 'docs.upload',
   );
 
@@ -219,7 +235,9 @@ function scribdfield_api_upload($file) {
 
   $response = curl_exec($ch);
 
-  return new SimpleXMLElement($response);
+  if ($response) {
+    return simplexml_load_string($response);
+  }
 }
 
 /**
