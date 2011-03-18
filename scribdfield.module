@@ -76,6 +76,12 @@ function scribdfield_widget_settings($op, $widget) {
  * Form API #process callback; see hook_elements().
  */
 function scribdfield_widget_process($element, $edit, &$form_state, $form) {
+  // On node resave, the default value for the data will in some cases
+  // not be transfered from the default_value by
+  // _form_builder_handle_input_element, so we do it here.
+  if (!isset($element['#value']['data']) && isset($element['#default_value']['data']) && is_array($element['#default_value']['data'])) {
+    $element['#value']['data'] = $element['#default_value']['data'];
+  }
   if (_form_button_was_clicked($element['filefield_remove'])) {
     unset($element['#value']['data']['scribd_doc_id']);
     unset($element['#value']['data']['scribd_access_key']);
@@ -196,7 +202,7 @@ function _scribdfield_node_presave(&$node, $field) {
       }
       else {
         drupal_set_message(t('@filepath could not be uploaded to Scribd.com: @error.', // thank you, usable error messages.
-          array('@filepath' => $node->{$node_key}[$field_delta]['filepath'], '@error' => $response_xml->error->attributes()->message)), 'error');
+          array('@filepath' => $node->{$field['field_name']}[$field_delta]['filepath'], '@error' => $response_xml->error->attributes()->message)), 'error');
       }
     }
   }
