@@ -4,6 +4,10 @@
  * Enables CCK FileField integration with Scribd.com.
  */
 
+define ('SCRIBDFIELD_PLATFORM_CURL', 'curl');
+define ('SCRIBDFIELD_PLATFORM_FOPEN', 'fopen');
+define ('SCRIBDFIELD_PLATFORM_EITHER', 'either');
+
 /**
  * Implementation of hook_menu().
  */

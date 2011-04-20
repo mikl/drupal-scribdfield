@@ -41,6 +41,34 @@ function scribdfield_admin_settings_form(&$form_state) {
     '#type'          => 'checkbox',
   );
 
+  $form['api'] = array(
+    '#title'        => t('API settings'),
+    '#type'         => 'fieldset',
+  );
+
+  $form['api']['scribdfield_request_framework'] = array(
+    '#type'         => 'select',
+    '#title'        => t('Request framework'),
+    '#description'  => t('Select the prefered request framework to use for making requests.'),
+    '#options'      => array(
+      SCRIBDFIELD_PLATFORM_EITHER => t('Either'),
+      SCRIBDFIELD_PLATFORM_CURL => t('Curl'),
+      SCRIBDFIELD_PLATFORM_FOPEN => t('Fopen'),
+    ),
+    '#default_value' => variable_get('scribdfield_request_framework', SCRIBDFIELD_PLATFORM_EITHER),
+  );
+
+  $form['api']['scribdfield_log_requests'] = array(
+    '#type'          => 'select',
+    '#title'         => t('Logging'),
+    '#description'   => t('Select logging status for requests.'),
+    '#options'       => array(
+      1 => t('On'),
+      0 => t('Off'),
+    ),
+    '#default_value' => variable_get('scribdfield_log_requests', 0),
+  );
+
   return system_settings_form($form);
 }
 

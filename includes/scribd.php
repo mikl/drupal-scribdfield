@@ -299,7 +299,7 @@ class Scribd {
 	}
 
 	function scribdfield_parse_xml($xml) {
-		//drupal_set_message("The SimpleXML library is not available (most likely because you are using php4). The current version of the iPaper module depends on simplexml_load_string(). For more information, see http://drupal.org/node/272299.", 'error');
+		//drupal_set_message("The SimpleXML library is not available (most likely because you are using php4). The current version of the scribdfield module depends on simplexml_load_string(). For more information, see http://drupal.org/node/272299.", 'error');
 		return;
 
 		$encoding = 'UTF-8';
@@ -311,7 +311,7 @@ class Scribd {
 		$ok = xml_parse_into_struct($parser, $xml, $values, $index);
 
 		if (!$ok) {
-			watchdog("ipaper", "Error parsing XML");
+			watchdog("scribdfield", "Error parsing XML");
 		}
 
 		xml_parser_free($parser);
@@ -341,7 +341,7 @@ class Scribd {
  */
 function _scribdfield_request($request_url, $params = NULL, $method = 'GET') {
 
-  if (variable_get('ipaper_log_requests', 0) && $params) {
+  if (variable_get('scribdfield_log_requests', 0) && $params) {
     $apimethod = $params['method'];
     $doc_id = $params['doc_id'] ? $params['doc_id'] : $params['doc_ids'];
     //remove these important parameters so that they are not included in the log messages
@@ -349,20 +349,20 @@ function _scribdfield_request($request_url, $params = NULL, $method = 'GET') {
     if($logparams['api_key']) $logparams['api_key']='xxx';
     if($logparams['api_sig']) $logparams['api_sig']='xxx';
     $link = $request_url . scribdfield_list_params($logparams);
-    watchdog('ipaper', "Action: %apimethod, Document ID: %doc_id \n URL: %link", array('%apimethod' => $apimethod, '%doc_id' => $doc_id, '%link' => $link), WATCHDOG_NOTICE);
+    watchdog('scribdfield', "Action: %apimethod, Document ID: %doc_id \n URL: %link", array('%apimethod' => $apimethod, '%doc_id' => $doc_id, '%link' => $link), WATCHDOG_NOTICE);
   }
 
-  $platform = variable_get('ipaper_request_framework', PLATFORM_EITHER);
-  if ($platform == PLATFORM_EITHER) {
+  $platform = variable_get('scribdfield_request_framework', SCRIBDFIELD_PLATFORM_EITHER);
+  if ($platform == SCRIBDFIELD_PLATFORM_EITHER) {
     if (function_exists("curl_init")) {
-      $platform = PLATFORM_CURL;
+      $platform = SCRIBDFIELD_PLATFORM_CURL;
     }
     else {
-      $platform = PLATFORM_FOPEN;
+      $platform = SCRIBDFIELD_PLATFORM_FOPEN;
     }
   }
   
-  if ($platform == PLATFORM_CURL) {
+  if ($platform == SCRIBDFIELD_PLATFORM_CURL) {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     if ($method == 'POST') {
@@ -377,7 +377,7 @@ function _scribdfield_request($request_url, $params = NULL, $method = 'GET') {
     if (curl_errno($ch)) {
       $link = $request_url . scribdfield_list_params($params);
       drupal_set_message(t("Request to Scribd.com failed. See the event log for more details."), 'error');
-      watchdog("ipaper", "Request failed (CURL) - %err - %link", array('%err' => curl_error($ch), '%link' => $link), WATCHDOG_ERROR);
+      watchdog("scribdfield", "Request failed (CURL) - %err - %link", array('%err' => curl_error($ch), '%link' => $link), WATCHDOG_ERROR);
     }
     curl_close($ch);
     return $data;
@@ -386,7 +386,7 @@ function _scribdfield_request($request_url, $params = NULL, $method = 'GET') {
     $headers = array();
     $data = NULL;
     if ($method == "POST") {
-      require_once drupal_get_path('module', 'ipaper') .'/multipart.inc';
+      require_once drupal_get_path('module', 'scribdfield') . '/includes/multipart.inc';
       $boundary = 'A0sFSD';
       $headers = array("Content-Type" => "multipart/form-data; boundary=$boundary");
       $data = multipart_encode($boundary, $params);
@@ -398,9 +398,9 @@ function _scribdfield_request($request_url, $params = NULL, $method = 'GET') {
     if ($request->error) {
       $link = $request_url . scribdfield_list_params($params);
       drupal_set_message(t("Request to Scribd.com failed. See the event log for more details."), 'error');
-      watchdog("ipaper", t("Request failed (FOPEN) - %err - %link"), array('%err' => $request->error, '%link' => $link), WATCHDOG_ERROR);
+      watchdog("scribdfield", t("Request failed (FOPEN) - %err - %link"), array('%err' => $request->error, '%link' => $link), WATCHDOG_ERROR);
       if ($request->code < 0) {
-        watchdog("ipaper", t("fsockopen might not be supported on your server. CURL must be installed or fsockopen enabled in order for the ipaper module to work"), NULL, WATCHDOG_ERROR);
+        watchdog("scribdfield", t("fsockopen might not be supported on your server. CURL must be installed or fsockopen enabled in order for the scribdfield module to work"), NULL, WATCHDOG_ERROR);
       }
     }
     return $request->data;
@@ -408,7 +408,7 @@ function _scribdfield_request($request_url, $params = NULL, $method = 'GET') {
 }
 
 /**
- * Ipaper Configuration Form
+ * Scribdfield Configuration Form
  * This is essentially an replacement for http_build_query, which was not used because it requires PHP5
  */
  
