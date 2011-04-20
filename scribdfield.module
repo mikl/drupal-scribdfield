@@ -190,6 +190,7 @@ function _scribdfield_node_presave(&$node, $field) {
         $node->{$field['field_name']}[$field_delta]['data']['scribd_doc_id']           = $response['doc_id'];
         $node->{$field['field_name']}[$field_delta]['data']['scribd_access_key']       = $response['access_key'];
         $node->{$field['field_name']}[$field_delta]['data']['scribd_secret_password']  = $response['secret_password'];
+        $node->{$field['field_name']}[$field_delta]['data']['public'] = $public;
         drupal_set_message(t('@filepath has been uploaded to Scribd.com.',
           array('@filepath' => $node->{$field['field_name']}[$field_delta]['filepath'])));
 
@@ -346,7 +347,7 @@ function theme_scribdfield_formatter_ipaper($element) {
     );
 
     // For secure files, we need to sign the request with a MD5 hash.
-    if ($secure_files) {
+    if (!$data['public'] && $secure_files) {
       // Bail if we don't have the API secret.
       if (!$api_secret) {
         drupal_set_message(t('Scribd API secret must be entered to view secure PDFs.'), 'warning');
