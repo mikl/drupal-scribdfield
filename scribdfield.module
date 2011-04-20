@@ -4,9 +4,9 @@
  * Enables CCK FileField integration with Scribd.com.
  */
 
-define ('SCRIBDFIELD_PLATFORM_CURL', 'curl');
-define ('SCRIBDFIELD_PLATFORM_FOPEN', 'fopen');
-define ('SCRIBDFIELD_PLATFORM_EITHER', 'either');
+define('SCRIBDFIELD_PLATFORM_CURL', 'curl');
+define('SCRIBDFIELD_PLATFORM_FOPEN', 'fopen');
+define('SCRIBDFIELD_PLATFORM_EITHER', 'either');
 
 /**
  * Implementation of hook_menu().
@@ -86,6 +86,7 @@ function scribdfield_widget_process($element, $edit, &$form_state, $form) {
   if (!isset($element['#value']['data']) && isset($element['#default_value']['data']) && is_array($element['#default_value']['data'])) {
     $element['#value']['data'] = $element['#default_value']['data'];
   }
+
   if (_form_button_was_clicked($element['filefield_remove'])) {
     unset($element['#value']['data']['scribd_doc_id']);
     unset($element['#value']['data']['scribd_access_key']);
