@@ -113,6 +113,11 @@ function scribdfield_widget_process($element, $edit, &$form_state, $form) {
     );
   }
 
+  $element['public'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Make uploaded file public.'),
+  );
+
   return $element;
 }
 
@@ -168,13 +173,17 @@ function scribdfield_nodeapi(&$node, $op, $teaser, $page) {
 function _scribdfield_node_presave(&$node, $field) {
   // Upload each file to Scribd.
   foreach ($node->{$field['field_name']} as $field_delta => $field_value) {
-    if ( ($field_value['filepath'])
+    if (($field_value['filepath'])
       && ($field_delta == 'field_scribd')
       && !($field_value['data']['scribd_doc_id']
       && file_exists($node->{$field['field_name']}[$field_delta]['filepath'])) ){
 
+      // Digging deep in the arrays to get the data we need.
+      $filepath = $node->{$field['field_name']}[$field_delta]['filepath'];
+      $public = (boolean) $node->{$field['field_name']}[$field_delta]['public'];
+
       // Handle the actual upload.
-      $response = scribdfield_api_upload($node->{$field['field_name']}[$field_delta]['filepath']);
+      $response = scribdfield_api_upload($filepath, $public);
 
       // On successful upload, store the returned values.
       if (is_array($response)) {
@@ -186,8 +195,8 @@ function _scribdfield_node_presave(&$node, $field) {
 
         // Check to see if files are set to be secure and, if so,
         // delete file from the local file system.
-        if (variable_get('scribd_secure_files', NULL)) {
-          file_delete( $node->{$field['field_name']}[$field_delta]['filepath'] );
+        if (!$public && variable_get('scribd_secure_files', NULL)) {
+          file_delete($node->{$field['field_name']}[$field_delta]['filepath']);
 
           // Check to see if printing is meant to be disabled.
           // If so, disable it through Scribd's API.
@@ -216,8 +225,10 @@ function _scribdfield_node_presave(&$node, $field) {
  *
  * @param $filename
  *   Full filename (with path) to the file to upload.
+ * @param $public
+ *   If TRUE, make the file public on Scribd.com.
  */
-function scribdfield_api_upload($filename) {
+function scribdfield_api_upload($filename, $public = TRUE) {
   if (!file_exists($filename)) { return FALSE; }
 
   $params = array(
@@ -227,9 +238,14 @@ function scribdfield_api_upload($filename) {
     'method'    => 'docs.upload',
   );
 
-  if (variable_get('scribd_secure_files', NULL)) {
-    $params['secure']   = 1;
+  // Set private access.
+  if (!$public) {
     $params['access'] = 'private';
+
+    // Secure flag only gets set for private files.
+    if (variable_get('scribd_secure_files', NULL)) {
+      $params['secure']   = 1;
+    }
   }
 
   $api = _scribdfield_get_api_class();
