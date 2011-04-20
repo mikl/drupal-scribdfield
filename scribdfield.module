@@ -364,7 +364,6 @@ function theme_scribdfield_formatter_ipaper($element) {
         'user_identifier' . $user_id;
       $hash = md5($string_for_md5);
 
-      $output[] = 'scribd_doc.addParam("use_ssl", true);';
       $output[] = 'scribd_doc.grantAccess("' . $user_id . '", "' . $session_id . '", "' . $hash . '");';
     }
 
