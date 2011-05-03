@@ -194,21 +194,15 @@ function _scribdfield_node_presave(&$node, $field) {
         drupal_set_message(t('@filepath has been uploaded to Scribd.com.',
           array('@filepath' => $node->{$field['field_name']}[$field_delta]['filepath'])));
 
-        // Check to see if files are set to be secure and, if so,
-        // delete file from the local file system.
-        if (!$public && variable_get('scribd_secure_files', NULL)) {
-          file_delete($node->{$field['field_name']}[$field_delta]['filepath']);
-
-          // Check to see if printing is meant to be disabled.
-          // If so, disable it through Scribd's API.
-          if( variable_get('scribd_disable_print', NULL)) {
-            $response_2 = scribdfield_api_disable_printing($node->{$field['field_name']}[$field_delta]['data']['scribd_doc_id']);
-            if ($response_2 !== 0) {
-              drupal_set_message(t('Printing was disabled on Scribd.com for your file.'));
-            }
-            else {
-              drupal_set_message(t('Printing could not be disabled for this file.  Delete and try again.'));
-            }
+        // Check to see if printing is meant to be disabled.
+        // If so, disable it through Scribd's API.
+        if (!$public && variable_get('scribd_secure_files', NULL) && variable_get('scribd_disable_print', NULL)) {
+          $response_2 = scribdfield_api_disable_printing($node->{$field['field_name']}[$field_delta]['data']['scribd_doc_id']);
+          if ($response_2 !== 0) {
+            drupal_set_message(t('Printing was disabled on Scribd.com for your file.'));
+          }
+          else {
+            drupal_set_message(t('Printing could not be disabled for this file.  Delete and try again.'));
           }
         }
       }
