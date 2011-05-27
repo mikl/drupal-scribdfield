@@ -350,7 +350,7 @@ function theme_scribdfield_formatter_ipaper($element) {
 
       global $user;
       $user_id = $user->uid;
-      $session_id = $user->sid;
+      $session_id = ($user->sid) ? $user->sid : $_SERVER['REQUEST_TIME'];
       $string_for_md5 =
         $api_secret .
         'document_id' . $data['scribd_doc_id'] .
